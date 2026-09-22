@@ -20,7 +20,7 @@ CHAT_ID = os.getenv('CHAT_ID', '-1003900335127')
 # 2. INISIALISASI AI YOLO
 print("Memuat model AI YOLOv8...")
 # WAJIB: Pakai 'yolov8n.pt' (Nano) agar muat di RAM 512MB Free Tier Render
-model = YOLO('yolov8s.pt')
+model = YOLO('yolov8n.pt')
 
 def send_to_telegram(image_path, caption):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
