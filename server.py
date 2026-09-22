@@ -1,19 +1,26 @@
-from flask import Flask, request
+import os
 import requests
 import cv2
+from flask import Flask, request
 from ultralytics import YOLO
+from dotenv import load_dotenv
+
+# Memuat file .env jika dijalankan secara lokal di VS Code
+load_dotenv()
 
 app = Flask(__name__)
 
 # -------------------------------------------------------------
-# 1. MASUKKAN TOKEN DAN CHAT ID TELEGRAM KAMU DI SINI
-BOT_TOKEN = "8592180742:AAFf5liqbci2GiyJsEaS4gUIXfBJOqyc1rw"
-CHAT_ID = -1003900335127
+# 1. BACA TOKEN DAN CHAT ID DARI ENVIRONMENT VARIABLES
+# (Aman dari kebocoran token saat di-push ke GitHub)
+BOT_TOKEN = os.getenv('BOT_TOKEN', '8592180742:AAFf5liqbci2GiyJsEaS4gUIXfBJOqyc1rw')
+CHAT_ID = os.getenv('CHAT_ID', '-1003900335127')
 # -------------------------------------------------------------
 
 # 2. INISIALISASI AI YOLO
 print("Memuat model AI YOLOv8...")
-model = YOLO('yolov8s.pt') # 'n' artinya Nano (versi paling ringan & cepat untuk laptop)
+# WAJIB: Pakai 'yolov8n.pt' (Nano) agar muat di RAM 512MB Free Tier Render
+model = YOLO('yolov8s.pt')
 
 def send_to_telegram(image_path, caption):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
@@ -61,7 +68,7 @@ def upload_file():
     else:
         status = "Macet 🔴"
 
-    # 5. SIMPAN FOTO HASIL DETEKSI (Berisi kotak-kotak penanda objek)
+    # 5. SIMPAN FOTO HASIL DETEKSI (Berisi bounding box penanda objek)
     annotated_frame = results[0].plot()
     hasil_filename = 'hasil_deteksi.jpg'
     cv2.imwrite(hasil_filename, annotated_frame)
@@ -76,5 +83,7 @@ def upload_file():
     return "Deteksi Selesai", 200
 
 if __name__ == '__main__':
-    print("Server berjalan... Menunggu kiriman foto dari ESP32-CAM")
-    app.run(host='0.0.0.0', port=5000)
+    # Membaca port yang diberikan oleh Render (Default: 5000 untuk lokal)
+    port = int(os.getenv('PORT', 5000))
+    print(f"Server berjalan di port {port}... Menunggu kiriman foto dari ESP32-CAM")
+    app.run(host='0.0.0.0', port=port)
