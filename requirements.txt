@@ -1,9 +1,8 @@
---extra-index-url https://download.pytorch.org/whl/cpu
+
 torch
 torchvision
 flask
 requests
-opencv-python-headless
+opencv-python
 ultralytics
-gunicorn
 python-dotenv

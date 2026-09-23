@@ -5,22 +5,25 @@ from flask import Flask, request
 from ultralytics import YOLO
 from dotenv import load_dotenv
 
-# Memuat file .env jika dijalankan secara lokal di VS Code
+# 1. MEMUAT ENVIRONMENT VARIABLES DARI FILE .env
+# Memastikan variabel rahasia terbaca dari file lokal
 load_dotenv()
 
 app = Flask(__name__)
 
-# -------------------------------------------------------------
-# 1. BACA TOKEN DAN CHAT ID DARI ENVIRONMENT VARIABLES
-# (Aman dari kebocoran token saat di-push ke GitHub)
-BOT_TOKEN = os.getenv('BOT_TOKEN', '8592180742:AAFf5liqbci2GiyJsEaS4gUIXfBJOqyc1rw')
-CHAT_ID = os.getenv('CHAT_ID', '-1003900335127')
-# -------------------------------------------------------------
+# Ambil token dan ID murni dari file .env tanpa fallback hardcode di skrip
+BOT_TOKEN = os.getenv('8592180742:AAFf5liqbci2GiyJsEaS4gUIXfBJOqyc1rw')
+CHAT_ID = os.getenv('-1003900335127')
+
+# Validasi untuk memastikan .env sudah diatur
+if not BOT_TOKEN or not CHAT_ID:
+    raise ValueError("BOT_TOKEN atau CHAT_ID tidak ditemukan! Pastikan Anda sudah membuat file .env.")
 
 # 2. INISIALISASI AI YOLO
 print("Memuat model AI YOLOv8...")
-# WAJIB: Pakai 'yolov8n.pt' (Nano) agar muat di RAM 512MB Free Tier Render
-model = YOLO('yolov8n.pt')
+# Karena dijalankan di server lokal (spesifikasi biasanya lebih tinggi dari free tier cloud),
+# Anda bisa menggunakan 'yolov8s.pt' (Small) jika ingin akurasi lebih baik, atau tetap 'yolov8n.pt' (Nano) untuk kecepatan.
+model = YOLO('yolov8s.pt')
 
 def send_to_telegram(image_path, caption):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
@@ -41,7 +44,7 @@ def upload_file():
     if 'photo' not in request.files:
         return "Tidak ada file photo", 400
     
-    # Simpan foto asli dari ESP32-CAM
+    # Simpan foto asli dari ESP32-CAM ke folder direktori lokal saat ini
     file = request.files['photo']
     filename = 'lalu_lintas_terbaru.jpg'
     file.save(filename)
@@ -83,7 +86,8 @@ def upload_file():
     return "Deteksi Selesai", 200
 
 if __name__ == '__main__':
-    # Membaca port yang diberikan oleh Render (Default: 5000 untuk lokal)
-    port = int(os.getenv('PORT', 5000))
-    print(f"Server berjalan di port {port}... Menunggu kiriman foto dari ESP32-CAM")
-    app.run(host='0.0.0.0', port=port)
+    # Untuk server lokal, kita tetapkan port secara eksplisit (misal 5000)
+    # Debug=True diaktifkan agar error langsung terlihat di terminal saat proses pengembangan
+    port = 5000
+    print(f"Server LOKAL berjalan di http://0.0.0.0:{port} ... Menunggu kiriman foto dari ESP32-CAM")
+    app.run(host='0.0.0.0', port=port, debug=True)
