@@ -12,8 +12,8 @@ load_dotenv()
 app = Flask(__name__)
 
 # Ambil token dan ID murni dari file .env tanpa fallback hardcode di skrip
-BOT_TOKEN = os.getenv('8592180742:AAFf5liqbci2GiyJsEaS4gUIXfBJOqyc1rw')
-CHAT_ID = os.getenv('-1003900335127')
+BOT_TOKEN ='8592180742:AAFf5liqbci2GiyJsEaS4gUIXfBJOqyc1rw'
+CHAT_ID =-1003900335127
 
 # Validasi untuk memastikan .env sudah diatur
 if not BOT_TOKEN or not CHAT_ID:
