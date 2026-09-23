@@ -44,7 +44,7 @@ def upload_file():
     if 'photo' not in request.files:
         return "Tidak ada file photo", 400
     
-    # Simpan foto asli dari ESP32-CAM ke folder direktori lokal saat ini
+    # Simpan foto asli dari ESP32-CAM
     file = request.files['photo']
     filename = 'lalu_lintas_terbaru.jpg'
     file.save(filename)
@@ -53,32 +53,55 @@ def upload_file():
     # 3. PROSES DETEKSI YOLO
     results = model(filename)
     
-    # ID Objek di YOLO: 2=Mobil, 3=Motor, 5=Bus, 7=Truk
-    vehicle_classes = [2, 3, 5, 7]
-    jumlah_kendaraan = 0
+    # Pemetaan ID Objek di YOLO (dataset COCO) ke nama kendaraan
+    jenis_kendaraan = {
+        2: "Mobil 🚗",
+        3: "Motor 🏍️",
+        5: "Bus 🚌",
+        7: "Truk 🚚"
+    }
     
-    # Menghitung objek yang terdeteksi
+    # Inisialisasi tempat menyimpan jumlah per jenis kendaraan
+    rekapan_kendaraan = {
+        "Mobil 🚗": 0,
+        "Motor 🏍️": 0,
+        "Bus 🚌": 0,
+        "Truk 🚚": 0
+    }
+    
+    jumlah_total = 0
+    
+    # Menghitung objek yang terdeteksi dan mengelompokkannya
     for box in results[0].boxes:
         class_id = int(box.cls[0])
-        if class_id in vehicle_classes:
-            jumlah_kendaraan += 1
+        if class_id in jenis_kendaraan:
+            nama_kendaraan = jenis_kendaraan[class_id]
+            rekapan_kendaraan[nama_kendaraan] += 1
+            jumlah_total += 1
 
     # 4. PENENTUAN STATUS KEPADATAN
-    if jumlah_kendaraan < 5:
+    # (Batas jumlah kendaraan bisa disesuaikan dengan kebutuhan Anda)
+    if jumlah_total < 5:
         status = "Lancar 🟢"
-    elif jumlah_kendaraan <= 10:
+    elif jumlah_total <= 10:
         status = "Ramai 🟡"
     else:
         status = "Macet 🔴"
 
-    # 5. SIMPAN FOTO HASIL DETEKSI (Berisi bounding box penanda objek)
+    # 5. SIMPAN FOTO HASIL DETEKSI
     annotated_frame = results[0].plot()
     hasil_filename = 'hasil_deteksi.jpg'
     cv2.imwrite(hasil_filename, annotated_frame)
 
     # 6. SIAPKAN PESAN & KIRIM KE TELEGRAM
-    pesan = f"🚦 LAPORAN LALU LINTAS 🚦\n\n"
-    pesan += f"🚗 Jumlah Kendaraan: {jumlah_kendaraan}\n"
+    pesan = "🚦 LAPORAN LALU LINTAS 🚦\n\n"
+    
+    pesan += "Rincian Kendaraan:\n"
+    # Looping untuk menampilkan setiap jenis dan jumlahnya
+    for jenis, jumlah in rekapan_kendaraan.items():
+        pesan += f"- {jenis}: {jumlah}\n"
+        
+    pesan += f"\nTotal Kendaraan: {jumlah_total}\n"
     pesan += f"📊 Status: {status}"
 
     send_to_telegram(hasil_filename, pesan)
