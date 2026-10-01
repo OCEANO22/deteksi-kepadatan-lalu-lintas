@@ -23,7 +23,7 @@ if not BOT_TOKEN or not CHAT_ID:
 print("Memuat model AI YOLOv8...")
 # Karena dijalankan di server lokal (spesifikasi biasanya lebih tinggi dari free tier cloud),
 # Anda bisa menggunakan 'yolov8s.pt' (Small) jika ingin akurasi lebih baik, atau tetap 'yolov8n.pt' (Nano) untuk kecepatan.
-model = YOLO('yolov8s.pt')
+model = YOLO('yolo11m.pt')
 
 def send_to_telegram(image_path, caption):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
